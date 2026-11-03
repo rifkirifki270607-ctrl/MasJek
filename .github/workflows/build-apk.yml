@@ -1,0 +1,51 @@
+
+name: Build MasJek APK
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download source code
+        uses: actions/checkout@v4
+
+      - name: Install Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Install Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+
+      - name: Create Android project
+        run: flutter create --platforms=android --project-name masjek /tmp/masjek
+
+      - name: Copy source files
+        run: |
+          cp lib/main.dart /tmp/masjek/lib/main.dart
+          cp pubspec.yaml /tmp/masjek/pubspec.yaml
+
+      - name: Build release APK
+        working-directory: /tmp/masjek
+        run: |
+          flutter pub get
+          flutter build apk --release
+
+      - name: Save APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: MasJek-APK
+          path: /tmp/masjek/build/app/outputs/flutter-apk/app-release.apk
+          retention-days: 7
